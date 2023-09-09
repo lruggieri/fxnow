@@ -8,4 +8,5 @@ var (
 	NotAuthenticated = errors.New("not authenticated")
 	NotAuthorized    = errors.New("not authorized")
 	InvalidParameter = errors.New("invalid parameter")
+	TooManyRequests  = errors.New("too many requests")
 )

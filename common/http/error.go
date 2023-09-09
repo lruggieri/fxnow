@@ -19,6 +19,8 @@ func GetHttpStatusFromError(err error) int {
 		return http.StatusForbidden
 	} else if errors.Is(err, cError.InvalidParameter) {
 		return http.StatusBadRequest
+	} else if errors.Is(err, cError.TooManyRequests) {
+		return http.StatusTooManyRequests
 	}
 
 	return http.StatusInternalServerError

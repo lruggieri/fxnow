@@ -77,7 +77,7 @@ func (m *MySQL) GetAPIKey(ctx context.Context, req store.GetAPIKeyRequest) (*sto
 	var res dao.APIKey
 	if tx = tx.First(&res); tx.Error != nil {
 		if tx.Error == gorm.ErrRecordNotFound {
-			return nil, cError.NotFound
+			return nil, errors.Wrap(cError.NotFound, "API Key not found")
 		}
 
 		return nil, tx.Error

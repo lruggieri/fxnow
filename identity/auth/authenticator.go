@@ -31,6 +31,10 @@ type UserInfo struct {
 }
 
 func GetUserInfoFromContext(ctx context.Context) *UserInfo {
+	if ctx == nil {
+		return nil
+	}
+
 	ctxInfo := ctx.Value(ContextUserInfoKey)
 
 	userInfo, ok := ctxInfo.(*UserInfo)

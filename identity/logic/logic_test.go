@@ -244,7 +244,6 @@ func TestImpl_CreateAPIKey(t *testing.T) {
 			tc.assertion(t, res, err)
 		})
 	}
-
 }
 
 func TestImpl_DeleteAPIKey(t *testing.T) {

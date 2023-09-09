@@ -14,6 +14,7 @@ func APIKeyToModel(in *APIKey) *model.APIKey {
 		ID:         in.ID,
 		APIKeyID:   in.APIKeyID,
 		UserID:     in.UserID,
+		Type:       model.APIKeyType(in.Type),
 		Expiration: util.SQLTimeToUnix(in.Expiration),
 
 		User: UserToModel(in.User),
