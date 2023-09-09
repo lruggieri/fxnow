@@ -8,9 +8,12 @@ import (
 )
 
 func TestGetAPIKeyIDFromContext(t *testing.T) {
-	ctx := context.WithValue(context.Background(), ContextKeyAPIKey, "api_key")
+	apiKey := "api_key"
 
+	ctx := context.WithValue(context.Background(), ContextKeyAPIKey, apiKey)
+
+	//nolint:staticcheck
 	assert.Equal(t, "", GetAPIKeyIDFromContext(nil))
 	assert.Equal(t, "", GetAPIKeyIDFromContext(context.Background()))
-	assert.Equal(t, "api_key", GetAPIKeyIDFromContext(ctx))
+	assert.Equal(t, apiKey, GetAPIKeyIDFromContext(ctx))
 }

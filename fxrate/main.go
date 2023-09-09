@@ -25,8 +25,6 @@ var (
 )
 
 func main() {
-	// mainContext := context.Background()
-
 	logger.InitLogger(zap.New(zap.Config{
 		Development: false,
 		Level:       logger.LevelDebug,
@@ -101,7 +99,7 @@ func HandleGetRate(c *gin.Context) {
 		return
 	}
 
-	c.Set(logic.ContextKeyAPIKey, apiKey)
+	c.Set(logic.ContextKeyAPIKey.String(), apiKey)
 
 	res, err := l.GetRate(c, logic.GetRateRequest{
 		FromCurrency: from,

@@ -38,11 +38,12 @@ type Impl struct {
 func (i *Impl) GetRate(ctx context.Context, req GetRateRequest) (*GetRateResponse, error) {
 	apiKeyID := GetAPIKeyIDFromContext(ctx)
 	if len(apiKeyID) == 0 {
-		return nil, errors.Wrap(cError.NotAuthorized, "API key not set")
+		return nil, errors.Wrap(cError.ErrNotAuthorized, "API key not set")
 	}
 
 	// check if API Key is valid by taking it from cache
 	var cak CachedAPIKey
+
 	exist, err := i.Cache.Get(ctx, GenerateCacheKeyAPIKey(apiKeyID), &cak)
 	if err != nil {
 		return nil, err
@@ -50,8 +51,10 @@ func (i *Impl) GetRate(ctx context.Context, req GetRateRequest) (*GetRateRespons
 
 	// if it's not found, search in DB
 	if !exist {
+		var res *store.GetAPIKeyResponse
+
 		// fetch it from DB
-		res, err := i.Store.GetAPIKey(ctx, store.GetAPIKeyRequest{APIKeyID: apiKeyID})
+		res, err = i.Store.GetAPIKey(ctx, store.GetAPIKeyRequest{APIKeyID: apiKeyID})
 		if err != nil {
 			return nil, err
 		}
@@ -67,7 +70,7 @@ func (i *Impl) GetRate(ctx context.Context, req GetRateRequest) (*GetRateRespons
 	// based on the API key Type, perform rate limiting
 	if cak.Type == model.APIKeyTypeLimited.Uint8() &&
 		!APIKeyUsagesWithinAllowedRange(cak.Usages, timeFrameOfInterest, RateLimitMaxUsages) {
-		return nil, cError.TooManyRequests
+		return nil, cError.ErrTooManyRequests
 	}
 
 	// fetch rate
@@ -79,7 +82,7 @@ func (i *Impl) GetRate(ctx context.Context, req GetRateRequest) (*GetRateRespons
 	}
 
 	if !exist {
-		return nil, errors.Wrap(cError.NotFound, "rate for this pair not found")
+		return nil, errors.Wrap(cError.ErrNotFound, "rate for this pair not found")
 	}
 
 	// remove useless usages

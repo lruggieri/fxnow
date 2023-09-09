@@ -11,6 +11,7 @@ import (
 	mockstore "github.com/lruggieri/fxnow/common/mock/store"
 	"github.com/lruggieri/fxnow/common/model"
 	"github.com/lruggieri/fxnow/common/store"
+
 	"github.com/lruggieri/fxnow/identity/auth"
 )
 
@@ -53,7 +54,7 @@ func TestImpl_CreateAPIKey(t *testing.T) {
 			mock: func(args args, d deps) {},
 			assertion: func(t *testing.T, res *CreateAPIKeyResponse, err error) {
 				assert.Nil(t, res)
-				assert.ErrorIs(t, err, cError.NotAuthenticated)
+				assert.ErrorIs(t, err, cError.ErrNotAuthenticated)
 			},
 		},
 		{
@@ -81,7 +82,7 @@ func TestImpl_CreateAPIKey(t *testing.T) {
 			mock: func(args args, d deps) {
 				d.store.EXPECT().GetUser(args.ctx, store.GetUserRequest{
 					Email: uInfo.Email,
-				}).Return(nil, cError.NotFound).Once()
+				}).Return(nil, cError.ErrNotFound).Once()
 
 				d.store.EXPECT().CreateUser(args.ctx, store.CreateUserRequest{
 					FirstName: uInfo.GivenName,
@@ -129,7 +130,7 @@ func TestImpl_CreateAPIKey(t *testing.T) {
 				}}, nil).Once()
 
 				d.store.EXPECT().GetAPIKey(args.ctx, store.GetAPIKeyRequest{UserID: "user_id"}).
-					Return(nil, cError.NotFound).Once()
+					Return(nil, cError.ErrNotFound).Once()
 
 				d.store.EXPECT().CreateAPIKey(args.ctx, store.CreateAPIKeyRequest{
 					UserID: "user_id",
@@ -159,7 +160,7 @@ func TestImpl_CreateAPIKey(t *testing.T) {
 			},
 			assertion: func(t *testing.T, res *CreateAPIKeyResponse, err error) {
 				assert.Nil(t, res)
-				assert.ErrorIs(t, err, cError.InvalidParameter)
+				assert.ErrorIs(t, err, cError.ErrInvalidParameter)
 			},
 		},
 		{
@@ -176,7 +177,7 @@ func TestImpl_CreateAPIKey(t *testing.T) {
 				}}, nil).Once()
 
 				d.store.EXPECT().GetAPIKey(args.ctx, store.GetAPIKeyRequest{UserID: "user_id"}).
-					Return(nil, cError.NotFound).Once()
+					Return(nil, cError.ErrNotFound).Once()
 
 				d.store.EXPECT().CreateAPIKey(args.ctx, store.CreateAPIKeyRequest{
 					UserID: "user_id",
@@ -199,7 +200,7 @@ func TestImpl_CreateAPIKey(t *testing.T) {
 			mock: func(args args, d deps) {
 				d.store.EXPECT().GetUser(args.ctx, store.GetUserRequest{
 					Email: uInfo.Email,
-				}).Return(nil, cError.NotFound).Once()
+				}).Return(nil, cError.ErrNotFound).Once()
 
 				d.store.EXPECT().CreateUser(args.ctx, store.CreateUserRequest{
 					FirstName: uInfo.GivenName,
@@ -210,7 +211,7 @@ func TestImpl_CreateAPIKey(t *testing.T) {
 				}, nil).Once()
 
 				d.store.EXPECT().GetAPIKey(args.ctx, store.GetAPIKeyRequest{UserID: "user_id"}).
-					Return(nil, cError.NotFound).Once()
+					Return(nil, cError.ErrNotFound).Once()
 
 				d.store.EXPECT().CreateAPIKey(args.ctx, store.CreateAPIKeyRequest{
 					UserID: "user_id",
@@ -285,7 +286,7 @@ func TestImpl_DeleteAPIKey(t *testing.T) {
 			mock: func(args args, d deps) {},
 			assertion: func(t *testing.T, res *DeleteAPIKeyResponse, err error) {
 				assert.Nil(t, res)
-				assert.ErrorIs(t, err, cError.NotAuthenticated)
+				assert.ErrorIs(t, err, cError.ErrNotAuthenticated)
 			},
 		},
 		{
@@ -343,7 +344,8 @@ func TestImpl_DeleteAPIKey(t *testing.T) {
 						APIKey: &model.APIKey{
 							APIKeyID: "api_key",
 							UserID:   "user_id",
-						}}, nil).Once()
+						},
+					}, nil).Once()
 
 				d.store.EXPECT().DeleteAPIKey(args.ctx, store.DeleteAPIKeyRequest{APIKeyID: "api_key"}).
 					Return(nil, testErr).Once()
@@ -372,11 +374,12 @@ func TestImpl_DeleteAPIKey(t *testing.T) {
 						APIKey: &model.APIKey{
 							APIKeyID: "api_key",
 							UserID:   "user_id_2",
-						}}, nil).Once()
+						},
+					}, nil).Once()
 			},
 			assertion: func(t *testing.T, res *DeleteAPIKeyResponse, err error) {
 				assert.Nil(t, res)
-				assert.ErrorIs(t, err, cError.NotAuthorized)
+				assert.ErrorIs(t, err, cError.ErrNotAuthorized)
 			},
 		},
 		{
@@ -397,7 +400,8 @@ func TestImpl_DeleteAPIKey(t *testing.T) {
 						APIKey: &model.APIKey{
 							APIKeyID: "api_key",
 							UserID:   "user_id",
-						}}, nil).Once()
+						},
+					}, nil).Once()
 
 				d.store.EXPECT().DeleteAPIKey(args.ctx, store.DeleteAPIKeyRequest{APIKeyID: "api_key"}).
 					Return(&store.DeleteAPIKeyResponse{}, nil).Once()
@@ -427,5 +431,4 @@ func TestImpl_DeleteAPIKey(t *testing.T) {
 			tc.assertion(t, res, err)
 		})
 	}
-
 }

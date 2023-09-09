@@ -8,18 +8,19 @@ import (
 	cError "github.com/lruggieri/fxnow/common/error"
 )
 
+//nolint:revive
 func GetHttpStatusFromError(err error) int {
-	if errors.Is(err, cError.Duplicated) {
+	if errors.Is(err, cError.ErrDuplicated) {
 		return http.StatusConflict
-	} else if errors.Is(err, cError.NotFound) {
+	} else if errors.Is(err, cError.ErrNotFound) {
 		return http.StatusNotFound
-	} else if errors.Is(err, cError.NotAuthenticated) {
+	} else if errors.Is(err, cError.ErrNotAuthenticated) {
 		return http.StatusUnauthorized
-	} else if errors.Is(err, cError.NotAuthorized) {
+	} else if errors.Is(err, cError.ErrNotAuthorized) {
 		return http.StatusForbidden
-	} else if errors.Is(err, cError.InvalidParameter) {
+	} else if errors.Is(err, cError.ErrInvalidParameter) {
 		return http.StatusBadRequest
-	} else if errors.Is(err, cError.TooManyRequests) {
+	} else if errors.Is(err, cError.ErrTooManyRequests) {
 		return http.StatusTooManyRequests
 	}
 

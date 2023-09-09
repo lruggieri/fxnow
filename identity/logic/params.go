@@ -1,7 +1,6 @@
 package logic
 
-type CreateAPIKeyRequest struct {
-}
+type CreateAPIKeyRequest struct{}
 
 type CreateAPIKeyResponse struct {
 	APIKeyID string

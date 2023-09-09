@@ -5,6 +5,7 @@ go 1.20
 replace github.com/lruggieri/fxnow/common => ../common
 
 require (
+	github.com/benbjohnson/clock v1.3.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/lruggieri/fxnow/common v0.0.0-00010101000000-000000000000
 	github.com/pkg/errors v0.9.1

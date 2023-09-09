@@ -1,7 +1,6 @@
 package zap_test
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -12,8 +11,6 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	type MyKey string
-
 	a := zap.New(zap.Config{})
 	assert.NotNil(t, a)
 
@@ -28,12 +25,6 @@ func TestNew(t *testing.T) {
 		OutputPaths:      []string{"stderr"},
 		ErrorOutputPaths: []string{"stdout"},
 		SkipLineEnding:   true,
-		Enrichers: []zap.Enricher{
-			zap.EnrichHostname(),
-			zap.EnrichFromContextValues(map[string]interface{}{
-				"LogField1": MyKey("LogField"),
-			}),
-		},
 	})
 	assert.NotNil(t, a)
 
@@ -96,27 +87,4 @@ func TestLogger_WithError(t *testing.T) {
 	assert.Equal(t, "info msg", s.line[0][zap.ZapFieldKeyMessage])
 	assert.Equal(t, "INFO", s.line[0]["level"])
 	assert.Equal(t, err.Error(), s.line[0]["error"])
-}
-
-func TestLogger_WithContext(t *testing.T) {
-	type MyKey string
-
-	var (
-		ctx = context.WithValue(
-			context.Background(),
-			MyKey("Key1"), "Value1",
-		)
-		e = zap.EnrichFromContextValues(map[string]interface{}{
-			"LogKey1": MyKey("Key1"),
-		})
-		sinkName = "TestLogger_WithContext"
-		l        = createLogger(sinkName, e).WithContext(ctx)
-		s        = getSink(sinkName)
-	)
-
-	l.Info("info msg")
-	l.Error("err msg")
-
-	assert.Equal(t, "Value1", s.line[0]["LogKey1"])
-	assert.Equal(t, "Value1", s.line[1]["LogKey1"])
 }

@@ -12,5 +12,6 @@ func HTTPResponse(c *gin.Context, resp interface{}, err error, statusCode int) {
 	if err != nil {
 		errStr = err.Error()
 	}
+
 	c.JSON(statusCode, Response{Response: resp, Error: errStr})
 }

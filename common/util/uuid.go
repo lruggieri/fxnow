@@ -4,6 +4,6 @@ import (
 	"github.com/lithammer/shortuuid/v4"
 )
 
-func NewUuid() string {
+func NewUUID() string {
 	return shortuuid.New()
 }

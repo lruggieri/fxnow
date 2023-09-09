@@ -8,13 +8,13 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	_ "github.com/gin-gonic/gin"
 
 	cHttp "github.com/lruggieri/fxnow/common/http"
 	"github.com/lruggieri/fxnow/common/logger"
 	"github.com/lruggieri/fxnow/common/logger/zap"
 	"github.com/lruggieri/fxnow/common/store"
 	"github.com/lruggieri/fxnow/common/store/mysql"
+
 	"github.com/lruggieri/fxnow/identity/auth"
 	"github.com/lruggieri/fxnow/identity/logic"
 )
@@ -124,7 +124,7 @@ func HandleCreateAPIKey(c *gin.Context) {
 		return
 	}
 
-	c.Set(auth.ContextUserInfoKey, authenticator.GetUserInfo(getToken(c)))
+	c.Set(auth.ContextUserInfoKey.String(), authenticator.GetUserInfo(getToken(c)))
 
 	resp, err := l.CreateAPIKey(c, logic.CreateAPIKeyRequest{})
 	if err != nil {
@@ -146,7 +146,7 @@ func HandleRevokeAPIKey(c *gin.Context) {
 		return
 	}
 
-	c.Set(auth.ContextUserInfoKey, authenticator.GetUserInfo(getToken(c)))
+	c.Set(auth.ContextUserInfoKey.String(), authenticator.GetUserInfo(getToken(c)))
 
 	keyToRevoke := c.Param("key")
 	if len(keyToRevoke) == 0 {

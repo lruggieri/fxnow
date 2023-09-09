@@ -8,6 +8,7 @@ import (
 	cError "github.com/lruggieri/fxnow/common/error"
 	"github.com/lruggieri/fxnow/common/model"
 	"github.com/lruggieri/fxnow/common/store"
+
 	"github.com/lruggieri/fxnow/identity/auth"
 )
 
@@ -20,10 +21,10 @@ type Impl struct {
 	Store store.Store
 }
 
-func (i *Impl) CreateAPIKey(ctx context.Context, req CreateAPIKeyRequest) (*CreateAPIKeyResponse, error) {
+func (i *Impl) CreateAPIKey(ctx context.Context, _ CreateAPIKeyRequest) (*CreateAPIKeyResponse, error) {
 	uInfo := auth.GetUserInfoFromContext(ctx)
 	if uInfo == nil {
-		return nil, cError.NotAuthenticated
+		return nil, cError.ErrNotAuthenticated
 	}
 
 	// create user if it doesn't exist
@@ -37,14 +38,14 @@ func (i *Impl) CreateAPIKey(ctx context.Context, req CreateAPIKeyRequest) (*Crea
 	}
 
 	apiKey, err := i.Store.GetAPIKey(ctx, store.GetAPIKeyRequest{UserID: uRes.UserID})
-	if err != nil && err != cError.NotFound {
+	if err != nil && err != cError.ErrNotFound {
 		return nil, err
 	}
 
 	// TODO Admin users can have multiple API keys
 
 	if apiKey != nil {
-		return nil, errors.Wrap(cError.InvalidParameter, "users can only have 1 active API key")
+		return nil, errors.Wrap(cError.ErrInvalidParameter, "users can only have 1 active API key")
 	}
 
 	// create API key
@@ -64,7 +65,7 @@ func (i *Impl) CreateAPIKey(ctx context.Context, req CreateAPIKeyRequest) (*Crea
 func (i *Impl) DeleteAPIKey(ctx context.Context, req DeleteAPIKeyRequest) (*DeleteAPIKeyResponse, error) {
 	uInfo := auth.GetUserInfoFromContext(ctx)
 	if uInfo == nil {
-		return nil, cError.NotAuthenticated
+		return nil, cError.ErrNotAuthenticated
 	}
 
 	dbUInfo, err := i.Store.GetUser(ctx, store.GetUserRequest{
@@ -81,7 +82,7 @@ func (i *Impl) DeleteAPIKey(ctx context.Context, req DeleteAPIKeyRequest) (*Dele
 
 	// only the API Key owners can delete their own key
 	if apiKey.APIKey.UserID != dbUInfo.User.UserID {
-		return nil, errors.Wrap(cError.NotAuthorized, "only API Key owners can delete their own key")
+		return nil, errors.Wrap(cError.ErrNotAuthorized, "only API Key owners can delete their own key")
 	}
 
 	_, err = i.Store.DeleteAPIKey(ctx, store.DeleteAPIKeyRequest{
@@ -102,8 +103,10 @@ func (i *Impl) createUser(ctx context.Context, req CreateUserRequest) (*CreateUs
 
 	var userID string
 
-	if errors.Is(err, cError.NotFound) {
-		res, err := i.Store.CreateUser(ctx, store.CreateUserRequest{
+	if errors.Is(err, cError.ErrNotFound) {
+		var res *store.CreateUserResponse
+
+		res, err = i.Store.CreateUser(ctx, store.CreateUserRequest{
 			FirstName: req.FirstName,
 			LastName:  req.LastName,
 			Email:     req.Email,

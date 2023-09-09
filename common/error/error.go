@@ -3,10 +3,10 @@ package error
 import "errors"
 
 var (
-	NotFound         = errors.New("not found")
-	Duplicated       = errors.New("duplicated")
-	NotAuthenticated = errors.New("not authenticated")
-	NotAuthorized    = errors.New("not authorized")
-	InvalidParameter = errors.New("invalid parameter")
-	TooManyRequests  = errors.New("too many requests")
+	ErrNotFound         = errors.New("not found")
+	ErrDuplicated       = errors.New("duplicated")
+	ErrNotAuthenticated = errors.New("not authenticated")
+	ErrNotAuthorized    = errors.New("not authorized")
+	ErrInvalidParameter = errors.New("invalid parameter")
+	ErrTooManyRequests  = errors.New("too many requests")
 )

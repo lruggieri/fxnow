@@ -1,9 +1,13 @@
 package auth
 
-import "context"
+import (
+	"context"
+
+	"github.com/lruggieri/fxnow/common/util"
+)
 
 const (
-	ContextUserInfoKey = "user-info"
+	ContextUserInfoKey util.ContextKey = "user-info"
 )
 
 type Authenticator interface {

@@ -1,9 +1,13 @@
 package logic
 
-import "context"
+import (
+	"context"
+
+	"github.com/lruggieri/fxnow/common/util"
+)
 
 const (
-	ContextKeyAPIKey = "api-key"
+	ContextKeyAPIKey util.ContextKey = "api-key"
 )
 
 func GetAPIKeyIDFromContext(c context.Context) string {

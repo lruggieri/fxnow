@@ -21,11 +21,12 @@ type MySQL struct {
 	db *gorm.DB
 }
 
-func (m *MySQL) GetUser(ctx context.Context, req store.GetUserRequest) (*store.GetUserResponse, error) {
+func (m *MySQL) GetUser(_ context.Context, req store.GetUserRequest) (*store.GetUserResponse, error) {
 	tx := m.db.Model(&dao.User{})
 	if req.UserID != "" {
 		tx = tx.Where("`user_id` = ?", req.UserID)
 	}
+
 	if req.Email != "" {
 		tx = tx.Where("`email` = ?", req.Email)
 	}
@@ -33,7 +34,7 @@ func (m *MySQL) GetUser(ctx context.Context, req store.GetUserRequest) (*store.G
 	var res dao.User
 	if tx = tx.First(&res); tx.Error != nil {
 		if tx.Error == gorm.ErrRecordNotFound {
-			return nil, cError.NotFound
+			return nil, cError.ErrNotFound
 		}
 
 		return nil, tx.Error
@@ -44,9 +45,9 @@ func (m *MySQL) GetUser(ctx context.Context, req store.GetUserRequest) (*store.G
 	}, nil
 }
 
-func (m *MySQL) CreateUser(ctx context.Context, req store.CreateUserRequest) (*store.CreateUserResponse, error) {
+func (m *MySQL) CreateUser(_ context.Context, req store.CreateUserRequest) (*store.CreateUserResponse, error) {
 	d := &dao.User{
-		UserID:    util.NewUuid(),
+		UserID:    util.NewUUID(),
 		FirstName: req.FirstName,
 		LastName:  req.LastName,
 		Email:     req.Email,
@@ -60,12 +61,13 @@ func (m *MySQL) CreateUser(ctx context.Context, req store.CreateUserRequest) (*s
 	}, nil
 }
 
-func (m *MySQL) GetAPIKey(ctx context.Context, req store.GetAPIKeyRequest) (*store.GetAPIKeyResponse, error) {
+func (m *MySQL) GetAPIKey(_ context.Context, req store.GetAPIKeyRequest) (*store.GetAPIKeyResponse, error) {
 	tx := m.db.Model(&dao.APIKey{}).Where("`disabled` = 0")
 
 	if req.UserID != "" {
 		tx = tx.Where("`user_id` = ?", req.UserID)
 	}
+
 	if req.APIKeyID != "" {
 		tx = tx.Where("`api_key_id` = ?", req.APIKeyID)
 	}
@@ -75,9 +77,10 @@ func (m *MySQL) GetAPIKey(ctx context.Context, req store.GetAPIKeyRequest) (*sto
 	}
 
 	var res dao.APIKey
+
 	if tx = tx.First(&res); tx.Error != nil {
 		if tx.Error == gorm.ErrRecordNotFound {
-			return nil, errors.Wrap(cError.NotFound, "API Key not found")
+			return nil, errors.Wrap(cError.ErrNotFound, "API Key not found")
 		}
 
 		return nil, tx.Error
@@ -88,17 +91,17 @@ func (m *MySQL) GetAPIKey(ctx context.Context, req store.GetAPIKeyRequest) (*sto
 	}, nil
 }
 
-func (m *MySQL) ListAPIKeys(ctx context.Context, req store.ListAPIKeysRequest) (*store.ListAPIKeysResponse, error) {
+func (*MySQL) ListAPIKeys(_ context.Context, _ store.ListAPIKeysRequest) (*store.ListAPIKeysResponse, error) {
 	return nil, errors.New("not implemented")
 }
 
-func (m *MySQL) CreateAPIKey(ctx context.Context, req store.CreateAPIKeyRequest) (*store.CreateAPIKeyResponse, error) {
+func (m *MySQL) CreateAPIKey(_ context.Context, req store.CreateAPIKeyRequest) (*store.CreateAPIKeyResponse, error) {
 	if req.Type == model.APIKeyTypeUndefined.Uint8() {
 		req.Type = model.APIKeyTypeLimited.Uint8()
 	}
 
 	d := &dao.APIKey{
-		APIKeyID: util.NewUuid(),
+		APIKeyID: util.NewUUID(),
 		UserID:   req.UserID,
 		Type:     req.Type,
 	}
@@ -111,7 +114,7 @@ func (m *MySQL) CreateAPIKey(ctx context.Context, req store.CreateAPIKeyRequest)
 	}, nil
 }
 
-func (m *MySQL) DeleteAPIKey(ctx context.Context, req store.DeleteAPIKeyRequest) (*store.DeleteAPIKeyResponse, error) {
+func (m *MySQL) DeleteAPIKey(_ context.Context, req store.DeleteAPIKeyRequest) (*store.DeleteAPIKeyResponse, error) {
 	tx := m.db.Model(&dao.APIKey{}).
 		Where("`api_key_id` = ?", req.APIKeyID).
 		Updates(map[string]interface{}{
@@ -120,7 +123,7 @@ func (m *MySQL) DeleteAPIKey(ctx context.Context, req store.DeleteAPIKeyRequest)
 		})
 
 	if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
-		return nil, cError.NotFound
+		return nil, cError.ErrNotFound
 	}
 
 	if tx.Error != nil {

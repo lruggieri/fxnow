@@ -59,7 +59,7 @@ func TestLogicGetRate(t *testing.T) {
 			mock: func(args args, d deps) {},
 			assertion: func(t *testing.T, res *GetRateResponse, err error) {
 				assert.Nil(t, res)
-				assert.ErrorIs(t, err, cError.NotAuthorized)
+				assert.ErrorIs(t, err, cError.ErrNotAuthorized)
 			},
 		},
 		{
@@ -137,7 +137,6 @@ func TestLogicGetRate(t *testing.T) {
 
 				d.store.EXPECT().GetAPIKey(args.ctx, store.GetAPIKeyRequest{APIKeyID: apiKey}).
 					Return(nil, testErr).Once()
-
 			},
 			assertion: func(t *testing.T, res *GetRateResponse, err error) {
 				assert.Nil(t, res)
@@ -230,7 +229,7 @@ func TestLogicGetRate(t *testing.T) {
 			},
 			assertion: func(t *testing.T, res *GetRateResponse, err error) {
 				assert.Nil(t, res)
-				assert.ErrorIs(t, err, cError.TooManyRequests)
+				assert.ErrorIs(t, err, cError.ErrTooManyRequests)
 			},
 		},
 		{
