@@ -70,7 +70,7 @@ func main() {
 	}
 
 	r := gin.Default()
-	r.GET("/ping", HandlePing)
+	r.GET("/health", HandleHealth)
 
 	// oidc
 	r.GET("/access", HandleAccess)
@@ -83,8 +83,8 @@ func main() {
 	panic(r.Run(fmt.Sprintf("127.0.0.1:%s", port)))
 }
 
-func HandlePing(c *gin.Context) {
-	cHttp.HTTPResponse(c, "pong", nil, http.StatusOK)
+func HandleHealth(c *gin.Context) {
+	cHttp.HTTPResponse(c, "OK", nil, http.StatusOK)
 }
 
 func HandleAccess(c *gin.Context) {
