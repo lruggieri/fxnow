@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	"github.com/lruggieri/fxnow/common/cache"
 	cError "github.com/lruggieri/fxnow/common/error"
 	mockcache "github.com/lruggieri/fxnow/common/mock/cache"
 	mockclock "github.com/lruggieri/fxnow/common/mock/clock"
@@ -74,8 +75,8 @@ func TestLogicGetRate(t *testing.T) {
 			mock: func(args args, d deps) {
 				d.cache.EXPECT().Get(
 					args.ctx,
-					GenerateCacheKeyAPIKey(apiKey),
-					mock.AnythingOfType("*logic.CachedAPIKey"),
+					cache.GenerateCacheKeyAPIKey(apiKey),
+					mock.AnythingOfType("*cache.CachedAPIKey"),
 				).Return(false, testErr).Once()
 			},
 			assertion: func(t *testing.T, res *GetRateResponse, err error) {
@@ -95,13 +96,13 @@ func TestLogicGetRate(t *testing.T) {
 			mock: func(args args, d deps) {
 				d.cache.EXPECT().Get(
 					args.ctx,
-					GenerateCacheKeyAPIKey(apiKey),
-					mock.AnythingOfType("*logic.CachedAPIKey"),
+					cache.GenerateCacheKeyAPIKey(apiKey),
+					mock.AnythingOfType("*cache.CachedAPIKey"),
 				).RunAndReturn(func(ctx context.Context, s string, i interface{}) (bool, error) {
-					reflect.ValueOf(i).Elem().Set(reflect.ValueOf(CachedAPIKey{
+					reflect.ValueOf(i).Elem().Set(reflect.ValueOf(cache.CachedAPIKey{
 						APIKeyID: apiKey,
 						Type:     model.APIKeyTypeLimited.Uint8(),
-						Usages: []CachedAPIKeyUsage{
+						Usages: []cache.CachedAPIKeyUsage{
 							{Timestamp: now.Unix()},
 						},
 					}))
@@ -110,8 +111,8 @@ func TestLogicGetRate(t *testing.T) {
 
 				d.cache.EXPECT().Get(
 					args.ctx,
-					GenerateCacheKeyRate(args.req.FromCurrency, args.req.ToCurrency),
-					mock.AnythingOfType("*logic.CachedRate"),
+					cache.GenerateCacheKeyRate(args.req.FromCurrency, args.req.ToCurrency),
+					mock.AnythingOfType("*cache.CachedRate"),
 				).Return(false, testErr).Once()
 			},
 			assertion: func(t *testing.T, res *GetRateResponse, err error) {
@@ -131,8 +132,8 @@ func TestLogicGetRate(t *testing.T) {
 			mock: func(args args, d deps) {
 				d.cache.EXPECT().Get(
 					args.ctx,
-					GenerateCacheKeyAPIKey(apiKey),
-					mock.AnythingOfType("*logic.CachedAPIKey"),
+					cache.GenerateCacheKeyAPIKey(apiKey),
+					mock.AnythingOfType("*cache.CachedAPIKey"),
 				).Return(false, nil).Once()
 
 				d.store.EXPECT().GetAPIKey(args.ctx, store.GetAPIKeyRequest{APIKeyID: apiKey}).
@@ -155,13 +156,13 @@ func TestLogicGetRate(t *testing.T) {
 			mock: func(args args, d deps) {
 				d.cache.EXPECT().Get(
 					args.ctx,
-					GenerateCacheKeyAPIKey(apiKey),
-					mock.AnythingOfType("*logic.CachedAPIKey"),
+					cache.GenerateCacheKeyAPIKey(apiKey),
+					mock.AnythingOfType("*cache.CachedAPIKey"),
 				).RunAndReturn(func(ctx context.Context, s string, i interface{}) (bool, error) {
-					reflect.ValueOf(i).Elem().Set(reflect.ValueOf(CachedAPIKey{
+					reflect.ValueOf(i).Elem().Set(reflect.ValueOf(cache.CachedAPIKey{
 						APIKeyID: apiKey,
 						Type:     model.APIKeyTypeLimited.Uint8(),
-						Usages: []CachedAPIKeyUsage{
+						Usages: []cache.CachedAPIKeyUsage{
 							{Timestamp: now.Unix()},
 						},
 					}))
@@ -170,10 +171,10 @@ func TestLogicGetRate(t *testing.T) {
 
 				d.cache.EXPECT().Get(
 					args.ctx,
-					GenerateCacheKeyRate(args.req.FromCurrency, args.req.ToCurrency),
-					mock.AnythingOfType("*logic.CachedRate"),
+					cache.GenerateCacheKeyRate(args.req.FromCurrency, args.req.ToCurrency),
+					mock.AnythingOfType("*cache.CachedRate"),
 				).RunAndReturn(func(ctx context.Context, s string, i interface{}) (bool, error) {
-					reflect.ValueOf(i).Elem().Set(reflect.ValueOf(CachedRate{
+					reflect.ValueOf(i).Elem().Set(reflect.ValueOf(cache.CachedRate{
 						Rate:      42.42,
 						Timestamp: now.Unix(),
 					}))
@@ -184,16 +185,16 @@ func TestLogicGetRate(t *testing.T) {
 
 				d.cache.EXPECT().Set(
 					args.ctx,
-					GenerateCacheKeyAPIKey(apiKey),
-					CachedAPIKey{
+					cache.GenerateCacheKeyAPIKey(apiKey),
+					cache.CachedAPIKey{
 						APIKeyID: apiKey,
 						Type:     model.APIKeyTypeLimited.Uint8(),
-						Usages: []CachedAPIKeyUsage{
+						Usages: []cache.CachedAPIKeyUsage{
 							{Timestamp: now.Unix()},
 							{Timestamp: now.Unix()},
 						},
 					},
-					MaxCacheLifetime,
+					cache.MaxCacheLifetime,
 				).Return(testErr).Once()
 			},
 			assertion: func(t *testing.T, res *GetRateResponse, err error) {
@@ -213,13 +214,13 @@ func TestLogicGetRate(t *testing.T) {
 			mock: func(args args, d deps) {
 				d.cache.EXPECT().Get(
 					args.ctx,
-					GenerateCacheKeyAPIKey(apiKey),
-					mock.AnythingOfType("*logic.CachedAPIKey"),
+					cache.GenerateCacheKeyAPIKey(apiKey),
+					mock.AnythingOfType("*cache.CachedAPIKey"),
 				).RunAndReturn(func(ctx context.Context, s string, i interface{}) (bool, error) {
-					reflect.ValueOf(i).Elem().Set(reflect.ValueOf(CachedAPIKey{
+					reflect.ValueOf(i).Elem().Set(reflect.ValueOf(cache.CachedAPIKey{
 						APIKeyID: apiKey,
 						Type:     model.APIKeyTypeLimited.Uint8(),
-						Usages: []CachedAPIKeyUsage{
+						Usages: []cache.CachedAPIKeyUsage{
 							{Timestamp: now.Unix()},
 							{Timestamp: now.Unix()},
 						},
@@ -244,13 +245,13 @@ func TestLogicGetRate(t *testing.T) {
 			mock: func(args args, d deps) {
 				d.cache.EXPECT().Get(
 					args.ctx,
-					GenerateCacheKeyAPIKey(apiKey),
-					mock.AnythingOfType("*logic.CachedAPIKey"),
+					cache.GenerateCacheKeyAPIKey(apiKey),
+					mock.AnythingOfType("*cache.CachedAPIKey"),
 				).RunAndReturn(func(ctx context.Context, s string, i interface{}) (bool, error) {
-					reflect.ValueOf(i).Elem().Set(reflect.ValueOf(CachedAPIKey{
+					reflect.ValueOf(i).Elem().Set(reflect.ValueOf(cache.CachedAPIKey{
 						APIKeyID: apiKey,
 						Type:     model.APIKeyTypeLimited.Uint8(),
-						Usages: []CachedAPIKeyUsage{
+						Usages: []cache.CachedAPIKeyUsage{
 							{Timestamp: now.Unix()},
 						},
 					}))
@@ -259,10 +260,10 @@ func TestLogicGetRate(t *testing.T) {
 
 				d.cache.EXPECT().Get(
 					args.ctx,
-					GenerateCacheKeyRate(args.req.FromCurrency, args.req.ToCurrency),
-					mock.AnythingOfType("*logic.CachedRate"),
+					cache.GenerateCacheKeyRate(args.req.FromCurrency, args.req.ToCurrency),
+					mock.AnythingOfType("*cache.CachedRate"),
 				).RunAndReturn(func(ctx context.Context, s string, i interface{}) (bool, error) {
-					reflect.ValueOf(i).Elem().Set(reflect.ValueOf(CachedRate{
+					reflect.ValueOf(i).Elem().Set(reflect.ValueOf(cache.CachedRate{
 						Rate:      42.42,
 						Timestamp: now.Unix(),
 					}))
@@ -273,16 +274,16 @@ func TestLogicGetRate(t *testing.T) {
 
 				d.cache.EXPECT().Set(
 					args.ctx,
-					GenerateCacheKeyAPIKey(apiKey),
-					CachedAPIKey{
+					cache.GenerateCacheKeyAPIKey(apiKey),
+					cache.CachedAPIKey{
 						APIKeyID: apiKey,
 						Type:     model.APIKeyTypeLimited.Uint8(),
-						Usages: []CachedAPIKeyUsage{
+						Usages: []cache.CachedAPIKeyUsage{
 							{Timestamp: now.Unix()},
 							{Timestamp: now.Unix()},
 						},
 					},
-					MaxCacheLifetime,
+					cache.MaxCacheLifetime,
 				).Return(nil).Once()
 			},
 			assertion: func(t *testing.T, res *GetRateResponse, err error) {
@@ -307,8 +308,8 @@ func TestLogicGetRate(t *testing.T) {
 			mock: func(args args, d deps) {
 				d.cache.EXPECT().Get(
 					args.ctx,
-					GenerateCacheKeyAPIKey(apiKey),
-					mock.AnythingOfType("*logic.CachedAPIKey"),
+					cache.GenerateCacheKeyAPIKey(apiKey),
+					mock.AnythingOfType("*cache.CachedAPIKey"),
 				).Return(false, nil).Once()
 
 				d.store.EXPECT().GetAPIKey(args.ctx, store.GetAPIKeyRequest{APIKeyID: apiKey}).
@@ -319,10 +320,10 @@ func TestLogicGetRate(t *testing.T) {
 
 				d.cache.EXPECT().Get(
 					args.ctx,
-					GenerateCacheKeyRate(args.req.FromCurrency, args.req.ToCurrency),
-					mock.AnythingOfType("*logic.CachedRate"),
+					cache.GenerateCacheKeyRate(args.req.FromCurrency, args.req.ToCurrency),
+					mock.AnythingOfType("*cache.CachedRate"),
 				).RunAndReturn(func(ctx context.Context, s string, i interface{}) (bool, error) {
-					reflect.ValueOf(i).Elem().Set(reflect.ValueOf(CachedRate{
+					reflect.ValueOf(i).Elem().Set(reflect.ValueOf(cache.CachedRate{
 						Rate:      42.42,
 						Timestamp: now.Unix(),
 					}))
@@ -333,15 +334,15 @@ func TestLogicGetRate(t *testing.T) {
 
 				d.cache.EXPECT().Set(
 					args.ctx,
-					GenerateCacheKeyAPIKey(apiKey),
-					CachedAPIKey{
+					cache.GenerateCacheKeyAPIKey(apiKey),
+					cache.CachedAPIKey{
 						APIKeyID: apiKey,
 						Type:     model.APIKeyTypeLimited.Uint8(),
-						Usages: []CachedAPIKeyUsage{
+						Usages: []cache.CachedAPIKeyUsage{
 							{Timestamp: now.Unix()},
 						},
 					},
-					MaxCacheLifetime,
+					cache.MaxCacheLifetime,
 				).Return(nil).Once()
 			},
 			assertion: func(t *testing.T, res *GetRateResponse, err error) {

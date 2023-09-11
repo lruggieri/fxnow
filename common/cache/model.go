@@ -1,4 +1,4 @@
-package logic
+package cache
 
 type CachedAPIKey struct {
 	APIKeyID string              `json:"api-key-id"`

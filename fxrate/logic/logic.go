@@ -2,8 +2,6 @@ package logic
 
 import (
 	"context"
-	"fmt"
-	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -18,11 +16,6 @@ import (
 const (
 	RateLimitDuration  = time.Minute
 	RateLimitMaxUsages = 2
-	MaxCacheLifetime   = 10 * time.Minute
-
-	// Cache prefixes
-	CachePrefixAPIKey = "api_key"
-	CachePrefixRate   = "rate"
 )
 
 type Logic interface {
@@ -42,9 +35,9 @@ func (i *Impl) GetRate(ctx context.Context, req GetRateRequest) (*GetRateRespons
 	}
 
 	// check if API Key is valid by taking it from cache
-	var cak CachedAPIKey
+	var cak cache.CachedAPIKey
 
-	exist, err := i.Cache.Get(ctx, GenerateCacheKeyAPIKey(apiKeyID), &cak)
+	exist, err := i.Cache.Get(ctx, cache.GenerateCacheKeyAPIKey(apiKeyID), &cak)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +52,7 @@ func (i *Impl) GetRate(ctx context.Context, req GetRateRequest) (*GetRateRespons
 			return nil, err
 		}
 
-		cak = CachedAPIKey{
+		cak = cache.CachedAPIKey{
 			APIKeyID: apiKeyID,
 			Type:     res.APIKey.Type.Uint8(),
 		}
@@ -74,9 +67,9 @@ func (i *Impl) GetRate(ctx context.Context, req GetRateRequest) (*GetRateRespons
 	}
 
 	// fetch rate
-	var cachedRate CachedRate
+	var cachedRate cache.CachedRate
 
-	exist, err = i.Cache.Get(ctx, GenerateCacheKeyRate(req.FromCurrency, req.ToCurrency), &cachedRate)
+	exist, err = i.Cache.Get(ctx, cache.GenerateCacheKeyRate(req.FromCurrency, req.ToCurrency), &cachedRate)
 	if err != nil {
 		return nil, err
 	}
@@ -88,9 +81,9 @@ func (i *Impl) GetRate(ctx context.Context, req GetRateRequest) (*GetRateRespons
 	// remove useless usages
 	cak.Usages = RemoveUsages(cak.Usages, timeFrameOfInterest.Unix())
 	// add this usage
-	cak.Usages = append(cak.Usages, CachedAPIKeyUsage{Timestamp: i.Clock.Now().Unix()})
+	cak.Usages = append(cak.Usages, cache.CachedAPIKeyUsage{Timestamp: i.Clock.Now().Unix()})
 	// update cached value
-	if err = i.Cache.Set(ctx, GenerateCacheKeyAPIKey(apiKeyID), cak, MaxCacheLifetime); err != nil {
+	if err = i.Cache.Set(ctx, cache.GenerateCacheKeyAPIKey(apiKeyID), cak, cache.MaxCacheLifetime); err != nil {
 		return nil, err
 	}
 
@@ -102,7 +95,7 @@ func (i *Impl) GetRate(ctx context.Context, req GetRateRequest) (*GetRateRespons
 	}, nil
 }
 
-func APIKeyUsagesWithinAllowedRange(usages []CachedAPIKeyUsage, fromTime time.Time, maxAllowedUsages int) bool {
+func APIKeyUsagesWithinAllowedRange(usages []cache.CachedAPIKeyUsage, fromTime time.Time, maxAllowedUsages int) bool {
 	usagesWithinTimeRange := 0
 
 	for _, usage := range usages {
@@ -116,8 +109,8 @@ func APIKeyUsagesWithinAllowedRange(usages []CachedAPIKeyUsage, fromTime time.Ti
 
 // RemoveUsages : in order to spare space in the cache and make searches faster, let's remove Usages that we already
 // know won't provide any useful information
-func RemoveUsages(usages []CachedAPIKeyUsage, notBefore int64) []CachedAPIKeyUsage {
-	newUsages := make([]CachedAPIKeyUsage, 0, len(usages))
+func RemoveUsages(usages []cache.CachedAPIKeyUsage, notBefore int64) []cache.CachedAPIKeyUsage {
+	newUsages := make([]cache.CachedAPIKeyUsage, 0, len(usages))
 
 	for _, usage := range usages {
 		if usage.Timestamp >= notBefore {
@@ -126,16 +119,4 @@ func RemoveUsages(usages []CachedAPIKeyUsage, notBefore int64) []CachedAPIKeyUsa
 	}
 
 	return newUsages
-}
-
-func GenerateCacheKeyAPIKey(apiKeyID string) string {
-	return fmt.Sprintf("%s_%s", CachePrefixAPIKey, apiKeyID)
-}
-
-func GenerateCacheKeyRate(fromCurrency, toCurrency string) string {
-	return fmt.Sprintf("%s_%s_%s",
-		CachePrefixRate,
-		strings.ToLower(fromCurrency),
-		strings.ToLower(toCurrency),
-	)
 }

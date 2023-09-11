@@ -175,3 +175,10 @@ func (i *Client) fetch(ctx context.Context, url string, resp interface{}) error 
 
 	return nil
 }
+
+func NewClient(apiKey string, httpClient httpclient.Client) *Client {
+	return &Client{
+		APIKey:     apiKey,
+		HTTPClient: httpClient,
+	}
+}

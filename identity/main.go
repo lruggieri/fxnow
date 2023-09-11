@@ -124,9 +124,10 @@ func HandleCreateAPIKey(c *gin.Context) {
 		return
 	}
 
-	c.Set(auth.ContextUserInfoKey.String(), authenticator.GetUserInfo(getToken(c)))
-
-	resp, err := l.CreateAPIKey(c, logic.CreateAPIKeyRequest{})
+	resp, err := l.CreateAPIKey(
+		context.WithValue(c, auth.ContextUserInfoKey, authenticator.GetUserInfo(getToken(c))),
+		logic.CreateAPIKeyRequest{},
+	)
 	if err != nil {
 		cHttp.HTTPResponse(c, "", err, cHttp.GetHttpStatusFromError(err))
 
@@ -146,8 +147,6 @@ func HandleRevokeAPIKey(c *gin.Context) {
 		return
 	}
 
-	c.Set(auth.ContextUserInfoKey.String(), authenticator.GetUserInfo(getToken(c)))
-
 	keyToRevoke := c.Param("key")
 	if len(keyToRevoke) == 0 {
 		cHttp.HTTPResponse(c, "", fmt.Errorf("invalid key"), http.StatusBadRequest)
@@ -155,7 +154,10 @@ func HandleRevokeAPIKey(c *gin.Context) {
 		return
 	}
 
-	_, err := l.DeleteAPIKey(c, logic.DeleteAPIKeyRequest{APIKeyID: keyToRevoke})
+	_, err := l.DeleteAPIKey(
+		context.WithValue(c, auth.ContextUserInfoKey, authenticator.GetUserInfo(getToken(c))),
+		logic.DeleteAPIKeyRequest{APIKeyID: keyToRevoke},
+	)
 	if err != nil {
 		cHttp.HTTPResponse(c, "", err, cHttp.GetHttpStatusFromError(err))
 

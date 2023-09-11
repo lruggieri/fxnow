@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/benbjohnson/clock"
 	"github.com/gin-gonic/gin"
@@ -77,6 +79,8 @@ func HandleHealth(c *gin.Context) {
 }
 
 func HandleGetRate(c *gin.Context) {
+	now := time.Now()
+
 	from := c.Query("from")
 	to := c.Query("to")
 	apiKey := c.Query("api-key")
@@ -99,9 +103,7 @@ func HandleGetRate(c *gin.Context) {
 		return
 	}
 
-	c.Set(logic.ContextKeyAPIKey.String(), apiKey)
-
-	res, err := l.GetRate(c, logic.GetRateRequest{
+	res, err := l.GetRate(context.WithValue(c, logic.ContextKeyAPIKey, apiKey), logic.GetRateRequest{
 		FromCurrency: from,
 		ToCurrency:   to,
 	})
@@ -116,10 +118,12 @@ func HandleGetRate(c *gin.Context) {
 		To        string  `json:"to"`
 		Rate      float64 `json:"rate"`
 		Timestamp int64   `json:"timestamp"`
+		Took      int64   `json:"took"`
 	}{
 		From:      res.FromCurrency,
 		To:        res.ToCurrency,
 		Rate:      res.Rate,
 		Timestamp: res.Timestamp,
+		Took:      time.Since(now).Milliseconds(),
 	}, nil, http.StatusOK)
 }

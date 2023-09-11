@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        dir: [ 'common', 'fxrate', 'identity' ]
+        dir: [ 'common', 'fxrate', 'identity', 'fxupdate' ]
     steps:
     - uses: actions/checkout@v3
 

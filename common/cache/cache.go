@@ -2,7 +2,16 @@ package cache
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"time"
+)
+
+const (
+	PrefixAPIKey = "api_key"
+	PrefixRate   = "rate"
+
+	MaxCacheLifetime = 10 * time.Minute
 )
 
 // Cache is an interface of a service that can cache the data
@@ -27,4 +36,16 @@ type Cache interface {
 
 	// Remove removes the value from the cache
 	Remove(ctx context.Context, key string) error
+}
+
+func GenerateCacheKeyAPIKey(apiKeyID string) string {
+	return fmt.Sprintf("%s_%s", PrefixAPIKey, apiKeyID)
+}
+
+func GenerateCacheKeyRate(fromCurrency, toCurrency string) string {
+	return fmt.Sprintf("%s_%s_%s",
+		PrefixRate,
+		strings.ToLower(fromCurrency),
+		strings.ToLower(toCurrency),
+	)
 }
