@@ -49,7 +49,7 @@ func main() {
 	r := gin.Default()
 	r.GET("/health", HandleHealth)
 
-	panic(r.Run(fmt.Sprintf("127.0.0.1:%s", port)))
+	panic(r.Run(fmt.Sprintf(":%s", port)))
 }
 
 func HandleHealth(c *gin.Context) {
