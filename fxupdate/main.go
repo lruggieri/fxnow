@@ -44,7 +44,7 @@ func main() {
 	}
 
 	// start service logic
-	l.StartFXUpdate(mainContext)
+	go l.StartFXUpdate(mainContext)
 
 	r := gin.Default()
 	r.GET("/health", HandleHealth)
