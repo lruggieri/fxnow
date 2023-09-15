@@ -70,15 +70,15 @@ func main() {
 	}
 
 	r := gin.Default()
-	r.GET("/health", HandleHealth)
+	r.GET("/identity/health", HandleHealth)
 
 	// oidc
-	r.GET("/access", HandleAccess)
-	r.GET("/callback", HandleOauthCallback)
+	r.GET("/identity/access", HandleAccess)
+	r.GET("/identity/callback", HandleOauthCallback)
 
 	// API key
-	r.POST("/api-key", HandleCreateAPIKey)
-	r.DELETE("/api-key/:key", HandleRevokeAPIKey)
+	r.POST("/identity/api-key", HandleCreateAPIKey)
+	r.DELETE("/identity/api-key/:key", HandleRevokeAPIKey)
 
 	panic(r.Run(fmt.Sprintf(":%s", port)))
 }

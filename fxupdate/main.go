@@ -47,7 +47,7 @@ func main() {
 	go l.StartFXUpdate(mainContext)
 
 	r := gin.Default()
-	r.GET("/health", HandleHealth)
+	r.GET("/fxupdate/health", HandleHealth)
 
 	panic(r.Run(fmt.Sprintf(":%s", port)))
 }

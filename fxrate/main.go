@@ -67,9 +67,9 @@ func main() {
 	}
 
 	r := gin.Default()
-	r.GET("/health", HandleHealth)
+	r.GET("/fxrate/health", HandleHealth)
 
-	r.GET("/rate", HandleGetRate)
+	r.GET("/fxrate/rate", HandleGetRate)
 
 	panic(r.Run(fmt.Sprintf(":%s", port)))
 }
