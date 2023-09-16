@@ -38,7 +38,7 @@ func (i *Impl) CreateAPIKey(ctx context.Context, _ CreateAPIKeyRequest) (*Create
 	}
 
 	apiKey, err := i.Store.GetAPIKey(ctx, store.GetAPIKeyRequest{UserID: uRes.UserID})
-	if err != nil && err != cError.ErrNotFound {
+	if err != nil && !errors.Is(err, cError.ErrNotFound) {
 		return nil, err
 	}
 
