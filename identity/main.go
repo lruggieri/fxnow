@@ -77,8 +77,9 @@ func main() {
 	r.GET("/identity/callback", HandleOauthCallback)
 
 	// API key
-	r.POST("/identity/api-key", HandleCreateAPIKey)
-	r.DELETE("/identity/api-key/:key", HandleRevokeAPIKey)
+	v1 := r.Group("/identity/v1")
+	v1.POST("/api-key", HandleCreateAPIKey)
+	v1.DELETE("/api-key/:key", HandleRevokeAPIKey)
 
 	panic(r.Run(fmt.Sprintf(":%s", port)))
 }

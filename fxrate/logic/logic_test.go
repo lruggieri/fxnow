@@ -53,8 +53,7 @@ func TestLogicGetRate(t *testing.T) {
 			args: args{
 				ctx: context.Background(),
 				req: GetRateRequest{
-					FromCurrency: "USD",
-					ToCurrency:   "JPY",
+					Pairs: []string{"USD_JPY", "EUR_USD"},
 				},
 			},
 			mock: func(args args, d deps) {},
@@ -68,8 +67,7 @@ func TestLogicGetRate(t *testing.T) {
 			args: args{
 				ctx: apiKeyCtx,
 				req: GetRateRequest{
-					FromCurrency: "USD",
-					ToCurrency:   "JPY",
+					Pairs: []string{"USD_JPY", "EUR_USD"},
 				},
 			},
 			mock: func(args args, d deps) {
@@ -89,8 +87,7 @@ func TestLogicGetRate(t *testing.T) {
 			args: args{
 				ctx: apiKeyCtx,
 				req: GetRateRequest{
-					FromCurrency: "USD",
-					ToCurrency:   "JPY",
+					Pairs: []string{"USD_JPY", "EUR_USD"},
 				},
 			},
 			mock: func(args args, d deps) {
@@ -109,9 +106,11 @@ func TestLogicGetRate(t *testing.T) {
 					return true, nil
 				}).Once()
 
+				d.clock.EXPECT().Now().Return(now).Once()
+
 				d.cache.EXPECT().Get(
 					args.ctx,
-					cache.GenerateCacheKeyRate(args.req.FromCurrency, args.req.ToCurrency),
+					cache.GenerateCacheKeyRate("USD", "JPY"),
 					mock.AnythingOfType("*cache.CachedRate"),
 				).Return(false, testErr).Once()
 			},
@@ -125,8 +124,7 @@ func TestLogicGetRate(t *testing.T) {
 			args: args{
 				ctx: apiKeyCtx,
 				req: GetRateRequest{
-					FromCurrency: "USD",
-					ToCurrency:   "JPY",
+					Pairs: []string{"USD_JPY", "EUR_USD"},
 				},
 			},
 			mock: func(args args, d deps) {
@@ -149,8 +147,7 @@ func TestLogicGetRate(t *testing.T) {
 			args: args{
 				ctx: apiKeyCtx,
 				req: GetRateRequest{
-					FromCurrency: "USD",
-					ToCurrency:   "JPY",
+					Pairs: []string{"USD_JPY", "EUR_USD"},
 				},
 			},
 			mock: func(args args, d deps) {
@@ -169,13 +166,27 @@ func TestLogicGetRate(t *testing.T) {
 					return true, nil
 				}).Once()
 
+				d.clock.EXPECT().Now().Return(now).Once()
+
 				d.cache.EXPECT().Get(
 					args.ctx,
-					cache.GenerateCacheKeyRate(args.req.FromCurrency, args.req.ToCurrency),
+					cache.GenerateCacheKeyRate("USD", "JPY"),
 					mock.AnythingOfType("*cache.CachedRate"),
 				).RunAndReturn(func(ctx context.Context, s string, i interface{}) (bool, error) {
 					reflect.ValueOf(i).Elem().Set(reflect.ValueOf(cache.CachedRate{
 						Rate:      42.42,
+						Timestamp: now.Unix(),
+					}))
+					return true, nil
+				}).Once()
+
+				d.cache.EXPECT().Get(
+					args.ctx,
+					cache.GenerateCacheKeyRate("EUR", "USD"),
+					mock.AnythingOfType("*cache.CachedRate"),
+				).RunAndReturn(func(ctx context.Context, s string, i interface{}) (bool, error) {
+					reflect.ValueOf(i).Elem().Set(reflect.ValueOf(cache.CachedRate{
+						Rate:      24.24,
 						Timestamp: now.Unix(),
 					}))
 					return true, nil
@@ -207,8 +218,7 @@ func TestLogicGetRate(t *testing.T) {
 			args: args{
 				ctx: apiKeyCtx,
 				req: GetRateRequest{
-					FromCurrency: "USD",
-					ToCurrency:   "JPY",
+					Pairs: []string{"USD_JPY", "EUR_USD"},
 				},
 			},
 			mock: func(args args, d deps) {
@@ -227,6 +237,8 @@ func TestLogicGetRate(t *testing.T) {
 					}))
 					return true, nil
 				}).Once()
+
+				d.clock.EXPECT().Now().Return(now).Once()
 			},
 			assertion: func(t *testing.T, res *GetRateResponse, err error) {
 				assert.Nil(t, res)
@@ -238,8 +250,7 @@ func TestLogicGetRate(t *testing.T) {
 			args: args{
 				ctx: apiKeyCtx,
 				req: GetRateRequest{
-					FromCurrency: "USD",
-					ToCurrency:   "JPY",
+					Pairs: []string{"USD_JPY", "EUR_USD"},
 				},
 			},
 			mock: func(args args, d deps) {
@@ -258,13 +269,27 @@ func TestLogicGetRate(t *testing.T) {
 					return true, nil
 				}).Once()
 
+				d.clock.EXPECT().Now().Return(now).Once()
+
 				d.cache.EXPECT().Get(
 					args.ctx,
-					cache.GenerateCacheKeyRate(args.req.FromCurrency, args.req.ToCurrency),
+					cache.GenerateCacheKeyRate("USD", "JPY"),
 					mock.AnythingOfType("*cache.CachedRate"),
 				).RunAndReturn(func(ctx context.Context, s string, i interface{}) (bool, error) {
 					reflect.ValueOf(i).Elem().Set(reflect.ValueOf(cache.CachedRate{
 						Rate:      42.42,
+						Timestamp: now.Unix(),
+					}))
+					return true, nil
+				}).Once()
+
+				d.cache.EXPECT().Get(
+					args.ctx,
+					cache.GenerateCacheKeyRate("EUR", "USD"),
+					mock.AnythingOfType("*cache.CachedRate"),
+				).RunAndReturn(func(ctx context.Context, s string, i interface{}) (bool, error) {
+					reflect.ValueOf(i).Elem().Set(reflect.ValueOf(cache.CachedRate{
+						Rate:      24.24,
 						Timestamp: now.Unix(),
 					}))
 					return true, nil
@@ -289,10 +314,18 @@ func TestLogicGetRate(t *testing.T) {
 			assertion: func(t *testing.T, res *GetRateResponse, err error) {
 				assert.Nil(t, err)
 				assert.Equal(t, &GetRateResponse{
-					FromCurrency: "USD",
-					ToCurrency:   "JPY",
-					Rate:         42.42,
-					Timestamp:    now.Unix(),
+					Rates: []GetRateResponseRate{
+						{
+							Pair:      "USD_JPY",
+							Rate:      42.42,
+							Timestamp: now.Unix(),
+						},
+						{
+							Pair:      "EUR_USD",
+							Rate:      24.24,
+							Timestamp: now.Unix(),
+						},
+					},
 				}, res)
 			},
 		},
@@ -301,8 +334,7 @@ func TestLogicGetRate(t *testing.T) {
 			args: args{
 				ctx: apiKeyCtx,
 				req: GetRateRequest{
-					FromCurrency: "USD",
-					ToCurrency:   "JPY",
+					Pairs: []string{"USD_JPY", "EUR_USD"},
 				},
 			},
 			mock: func(args args, d deps) {
@@ -318,13 +350,27 @@ func TestLogicGetRate(t *testing.T) {
 						Type:     model.APIKeyTypeLimited,
 					}}, nil).Once()
 
+				d.clock.EXPECT().Now().Return(now).Once()
+
 				d.cache.EXPECT().Get(
 					args.ctx,
-					cache.GenerateCacheKeyRate(args.req.FromCurrency, args.req.ToCurrency),
+					cache.GenerateCacheKeyRate("USD", "JPY"),
 					mock.AnythingOfType("*cache.CachedRate"),
 				).RunAndReturn(func(ctx context.Context, s string, i interface{}) (bool, error) {
 					reflect.ValueOf(i).Elem().Set(reflect.ValueOf(cache.CachedRate{
 						Rate:      42.42,
+						Timestamp: now.Unix(),
+					}))
+					return true, nil
+				}).Once()
+
+				d.cache.EXPECT().Get(
+					args.ctx,
+					cache.GenerateCacheKeyRate("EUR", "USD"),
+					mock.AnythingOfType("*cache.CachedRate"),
+				).RunAndReturn(func(ctx context.Context, s string, i interface{}) (bool, error) {
+					reflect.ValueOf(i).Elem().Set(reflect.ValueOf(cache.CachedRate{
+						Rate:      24.24,
 						Timestamp: now.Unix(),
 					}))
 					return true, nil
@@ -348,10 +394,18 @@ func TestLogicGetRate(t *testing.T) {
 			assertion: func(t *testing.T, res *GetRateResponse, err error) {
 				assert.Nil(t, err)
 				assert.Equal(t, &GetRateResponse{
-					FromCurrency: "USD",
-					ToCurrency:   "JPY",
-					Rate:         42.42,
-					Timestamp:    now.Unix(),
+					Rates: []GetRateResponseRate{
+						{
+							Pair:      "USD_JPY",
+							Rate:      42.42,
+							Timestamp: now.Unix(),
+						},
+						{
+							Pair:      "EUR_USD",
+							Rate:      24.24,
+							Timestamp: now.Unix(),
+						},
+					},
 				}, res)
 			},
 		},

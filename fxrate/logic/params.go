@@ -1,13 +1,15 @@
 package logic
 
 type GetRateRequest struct {
-	FromCurrency string
-	ToCurrency   string
+	Pairs []string
+}
+
+type GetRateResponseRate struct {
+	Pair      string
+	Rate      float64
+	Timestamp int64
 }
 
 type GetRateResponse struct {
-	FromCurrency string
-	ToCurrency   string
-	Rate         float64
-	Timestamp    int64
+	Rates []GetRateResponseRate
 }

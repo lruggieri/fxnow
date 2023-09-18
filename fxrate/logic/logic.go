@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/pkg/errors"
@@ -9,8 +10,10 @@ import (
 	"github.com/lruggieri/fxnow/common/cache"
 	"github.com/lruggieri/fxnow/common/clock"
 	cError "github.com/lruggieri/fxnow/common/error"
+	"github.com/lruggieri/fxnow/common/logger"
 	"github.com/lruggieri/fxnow/common/model"
 	"github.com/lruggieri/fxnow/common/store"
+	"github.com/lruggieri/fxnow/common/util"
 )
 
 const (
@@ -58,7 +61,7 @@ func (i *Impl) GetRate(ctx context.Context, req GetRateRequest) (*GetRateRespons
 		}
 	}
 
-	timeFrameOfInterest := time.Now().Add(-RateLimitDuration)
+	timeFrameOfInterest := i.Clock.Now().Add(-RateLimitDuration)
 
 	// based on the API key Type, perform rate limiting
 	if cak.Type == model.APIKeyTypeLimited.Uint8() &&
@@ -66,16 +69,9 @@ func (i *Impl) GetRate(ctx context.Context, req GetRateRequest) (*GetRateRespons
 		return nil, cError.ErrTooManyRequests
 	}
 
-	// fetch rate
-	var cachedRate cache.CachedRate
-
-	exist, err = i.Cache.Get(ctx, cache.GenerateCacheKeyRate(req.FromCurrency, req.ToCurrency), &cachedRate)
+	responseRates, err := i.fetchRates(ctx, req.Pairs)
 	if err != nil {
 		return nil, err
-	}
-
-	if !exist {
-		return nil, errors.Wrap(cError.ErrNotFound, "rate for this pair not found")
 	}
 
 	// remove useless usages
@@ -88,11 +84,36 @@ func (i *Impl) GetRate(ctx context.Context, req GetRateRequest) (*GetRateRespons
 	}
 
 	return &GetRateResponse{
-		FromCurrency: req.FromCurrency,
-		ToCurrency:   req.ToCurrency,
-		Rate:         cachedRate.Rate,
-		Timestamp:    cachedRate.Timestamp,
+		Rates: responseRates,
 	}, nil
+}
+
+func (i *Impl) fetchRates(ctx context.Context, pairs []string) ([]GetRateResponseRate, error) {
+	responseRates := make([]GetRateResponseRate, 0, len(pairs))
+
+	for _, pair := range pairs {
+		from, to := util.CurrenciesFromPair(pair)
+
+		var cachedRate cache.CachedRate
+
+		exist, err := i.Cache.Get(ctx, cache.GenerateCacheKeyRate(from, to), &cachedRate)
+		if err != nil {
+			return nil, err
+		}
+
+		if !exist {
+			logger.WithField("pair", pair).Error("rate for pair not found")
+			return nil, errors.Wrap(cError.ErrNotFound, fmt.Sprintf("rate for pair '%s' not found", pair))
+		}
+
+		responseRates = append(responseRates, GetRateResponseRate{
+			Pair:      pair,
+			Rate:      cachedRate.Rate,
+			Timestamp: cachedRate.Timestamp,
+		})
+	}
+
+	return responseRates, nil
 }
 
 func APIKeyUsagesWithinAllowedRange(usages []cache.CachedAPIKeyUsage, fromTime time.Time, maxAllowedUsages int) bool {
