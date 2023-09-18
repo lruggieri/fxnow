@@ -23,7 +23,7 @@ curl --location --request POST 'https://fx-now.com/identity/api-key' \
 This will return an API key you can use to fetch forex data though the `/rate` API. For example, if you want to fetch
 data for the USD-JPY pair, run:
 ```
-curl --location 'https://fx-now.com/fxrate/rate?from=USD&to=JPY&api-key={your_api_key}'
+curl --location 'https://fx-now.com/fxrate/rate?pairs=USD_JPY&api-key={your_api_key}'
 ```
 
 Most Forex pairs are already available. Cryptocurrencies will be enabled in the future.

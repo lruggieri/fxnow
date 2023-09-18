@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -17,6 +18,8 @@ import (
 	"github.com/lruggieri/fxnow/common/logger/zap"
 	"github.com/lruggieri/fxnow/common/store"
 	"github.com/lruggieri/fxnow/common/store/mysql"
+	"github.com/lruggieri/fxnow/common/util"
+
 	"github.com/lruggieri/fxnow/fxrate/logic"
 )
 
@@ -69,7 +72,8 @@ func main() {
 	r := gin.Default()
 	r.GET("/fxrate/health", HandleHealth)
 
-	r.GET("/fxrate/rate", HandleGetRate)
+	v1 := r.Group("/fxrate/v1")
+	v1.GET("/rate", HandleGetRate)
 
 	panic(r.Run(fmt.Sprintf(":%s", port)))
 }
@@ -81,18 +85,13 @@ func HandleHealth(c *gin.Context) {
 func HandleGetRate(c *gin.Context) {
 	now := time.Now()
 
-	from := c.Query("from")
-	to := c.Query("to")
+	// pairs: a list of currency pairs separated by comma (e.g. "USD_JPY,EUR_USD,GBP_CAD")
+	pairsStr := c.Query("pairs")
+
 	apiKey := c.Query("api-key")
 
-	if from == "" {
-		cHttp.HTTPResponse(c, nil, fmt.Errorf("missing 'from' parameter"), http.StatusBadRequest)
-
-		return
-	}
-
-	if to == "" {
-		cHttp.HTTPResponse(c, nil, fmt.Errorf("missing 'to' parameter"), http.StatusBadRequest)
+	if pairsStr == "" {
+		cHttp.HTTPResponse(c, nil, fmt.Errorf("missing 'pairs' parameter"), http.StatusBadRequest)
 
 		return
 	}
@@ -103,9 +102,18 @@ func HandleGetRate(c *gin.Context) {
 		return
 	}
 
+	pairs := strings.Split(pairsStr, ",")
+
+	cleanPairs := util.Map(pairs, func(item string) string {
+		return strings.TrimSpace(item)
+	})
+
+	cleanPairs = util.Filter(cleanPairs, func(item string) bool {
+		return item != ""
+	})
+
 	res, err := l.GetRate(context.WithValue(c, logic.ContextKeyAPIKey, apiKey), logic.GetRateRequest{
-		FromCurrency: from,
-		ToCurrency:   to,
+		Pairs: cleanPairs,
 	})
 	if err != nil {
 		cHttp.HTTPResponse(c, "", err, cHttp.GetHttpStatusFromError(err))
@@ -113,17 +121,27 @@ func HandleGetRate(c *gin.Context) {
 		return
 	}
 
-	cHttp.HTTPResponse(c, struct {
-		From      string  `json:"from"`
-		To        string  `json:"to"`
+	type responseRate struct {
+		Pair      string  `json:"pair"`
 		Rate      float64 `json:"rate"`
 		Timestamp int64   `json:"timestamp"`
-		Took      int64   `json:"took"`
+	}
+
+	rates := make([]responseRate, 0, len(res.Rates))
+
+	for _, rate := range res.Rates {
+		rates = append(rates, responseRate{
+			Pair:      rate.Pair,
+			Rate:      rate.Rate,
+			Timestamp: rate.Timestamp,
+		})
+	}
+
+	cHttp.HTTPResponse(c, struct {
+		Rates []responseRate `json:"rates"`
+		Took  int64          `json:"took"`
 	}{
-		From:      res.FromCurrency,
-		To:        res.ToCurrency,
-		Rate:      res.Rate,
-		Timestamp: res.Timestamp,
-		Took:      time.Since(now).Milliseconds(),
+		Rates: rates,
+		Took:  time.Since(now).Milliseconds(),
 	}, nil, http.StatusOK)
 }
