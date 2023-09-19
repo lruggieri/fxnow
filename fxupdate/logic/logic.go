@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	UpdateTicker = time.Minute
+	UpdateTicker = 20 * time.Second
 )
 
 type Logic interface {

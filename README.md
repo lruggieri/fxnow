@@ -17,13 +17,13 @@ To get access to Forex data you first need to obtain an API key. To do that, acc
 <br/>`https://fx-now.com/identity/access`. This will set a cookie for the domain "fx-now.com". With this cookie set,
 make a POST request like
 ```
-curl --location --request POST 'https://fx-now.com/identity/api-key' \
+curl --location --request POST 'https://fx-now.com/identity/v1/api-key' \
 --header 'Cookie: access_token={your_access_token}'
 ```
 This will return an API key you can use to fetch forex data though the `/rate` API. For example, if you want to fetch
 data for the USD-JPY pair, run:
 ```
-curl --location 'https://fx-now.com/fxrate/rate?pairs=USD_JPY&api-key={your_api_key}'
+curl --location 'https://fx-now.com/fxrate/v1/rate?pairs=USD_JPY&api-key={your_api_key}'
 ```
 
 Most Forex pairs are already available. Cryptocurrencies will be enabled in the future.
