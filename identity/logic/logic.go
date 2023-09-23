@@ -13,12 +13,39 @@ import (
 )
 
 type Logic interface {
+	ListAPIKeys(context.Context, ListAPIKeysRequest) (*ListAPIKeysResponse, error)
 	CreateAPIKey(context.Context, CreateAPIKeyRequest) (*CreateAPIKeyResponse, error)
 	DeleteAPIKey(context.Context, DeleteAPIKeyRequest) (*DeleteAPIKeyResponse, error)
 }
 
 type Impl struct {
 	Store store.Store
+}
+
+func (i *Impl) ListAPIKeys(ctx context.Context, _ ListAPIKeysRequest) (*ListAPIKeysResponse, error) {
+	uInfo := auth.GetUserInfoFromContext(ctx)
+	if uInfo == nil {
+		return nil, cError.ErrNotAuthenticated
+	}
+
+	// create user if it doesn't exist
+	uRes, err := i.createUser(ctx, CreateUserRequest{
+		FirstName: uInfo.GivenName,
+		LastName:  uInfo.FamilyName,
+		Email:     uInfo.Email,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	apiKeys, err := i.Store.ListAPIKeys(ctx, store.ListAPIKeysRequest{UserID: uRes.UserID})
+	if err != nil && !errors.Is(err, cError.ErrNotFound) {
+		return nil, err
+	}
+
+	return &ListAPIKeysResponse{
+		APIKeys: apiKeys.UserKeys,
+	}, nil
 }
 
 func (i *Impl) CreateAPIKey(ctx context.Context, _ CreateAPIKeyRequest) (*CreateAPIKeyResponse, error) {
