@@ -1,5 +1,13 @@
 package logic
 
+import "github.com/lruggieri/fxnow/common/model"
+
+type ListAPIKeysRequest struct{}
+
+type ListAPIKeysResponse struct {
+	APIKeys []*model.APIKey
+}
+
 type CreateAPIKeyRequest struct{}
 
 type CreateAPIKeyResponse struct {

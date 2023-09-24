@@ -39,7 +39,7 @@ type ListAPIKeysRequest struct {
 }
 
 type ListAPIKeysResponse struct {
-	UserKeys []model.APIKey
+	UserKeys []*model.APIKey
 }
 
 type CreateAPIKeyRequest struct {

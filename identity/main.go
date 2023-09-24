@@ -70,6 +70,7 @@ func main() {
 	}
 
 	r := gin.Default()
+	r.Use(commonHeaders())
 	r.GET("/identity/health", HandleHealth)
 
 	// oidc
@@ -78,10 +79,18 @@ func main() {
 
 	// API key
 	v1 := r.Group("/identity/v1")
+	v1.GET("/api-keys", HandleListAPIKey)
 	v1.POST("/api-key", HandleCreateAPIKey)
 	v1.DELETE("/api-key/:key", HandleRevokeAPIKey)
 
 	panic(r.Run(fmt.Sprintf(":%s", port)))
+}
+
+func commonHeaders() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Header("Content-Type", "application/json")
+		c.Next()
+	}
 }
 
 func HandleHealth(c *gin.Context) {
@@ -107,7 +116,7 @@ func HandleOauthCallback(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie("access_token", token, 0, "/", "", false, true)
+	c.SetCookie("access_token", token, 0, "/", "", false, false)
 
 	// redirect the user where it came from before the auth flow started
 	state := c.Query("state")
@@ -117,6 +126,41 @@ func HandleOauthCallback(c *gin.Context) {
 	}
 
 	cHttp.HTTPResponse(c, "OK", nil, http.StatusOK)
+}
+
+func HandleListAPIKey(c *gin.Context) {
+	if !isAuthenticated(c) {
+		c.Redirect(http.StatusFound, authenticator.GetOIDCConsentURL(getFullPath(c)))
+		return
+	}
+
+	resp, err := l.ListAPIKeys(
+		context.WithValue(c, auth.ContextUserInfoKey, authenticator.GetUserInfo(getToken(c))),
+		logic.ListAPIKeysRequest{},
+	)
+	if err != nil {
+		cHttp.HTTPResponse(c, "", err, cHttp.GetHttpStatusFromError(err))
+
+		return
+	}
+
+	type key struct {
+		APIKeyID   string `json:"api_key"`
+		Expiration int64  `json:"expiration"`
+	}
+
+	apiKeys := make([]key, 0, len(resp.APIKeys))
+
+	for _, apiKey := range resp.APIKeys {
+		apiKeys = append(apiKeys, key{
+			APIKeyID:   apiKey.APIKeyID,
+			Expiration: apiKey.Expiration,
+		})
+	}
+
+	cHttp.HTTPResponse(c, struct {
+		APIKeys []key `json:"api-keys"`
+	}{apiKeys}, nil, http.StatusOK)
 }
 
 func HandleCreateAPIKey(c *gin.Context) {

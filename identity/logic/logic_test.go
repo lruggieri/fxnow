@@ -15,6 +15,138 @@ import (
 	"github.com/lruggieri/fxnow/identity/auth"
 )
 
+func TestImpl_ListAPIKeys(t *testing.T) {
+	testErr := errors.New("error")
+
+	type deps struct {
+		store *mockstore.Store
+	}
+
+	type args struct {
+		ctx context.Context
+		req ListAPIKeysRequest
+	}
+
+	uInfo := auth.UserInfo{
+		Email:      "user@domain.com",
+		GivenName:  "name",
+		FamilyName: "surname",
+	}
+	uInfoCtx := context.WithValue(context.Background(), auth.ContextUserInfoKey, &uInfo)
+
+	tests := []struct {
+		name      string
+		deps      deps
+		args      args
+		mock      func(args args, d deps)
+		assertion func(
+			t *testing.T,
+			res *ListAPIKeysResponse,
+			err error,
+		)
+	}{
+		{
+			name: "error-no-user-info",
+			args: args{
+				ctx: context.Background(),
+				req: ListAPIKeysRequest{},
+			},
+			mock: func(args args, d deps) {},
+			assertion: func(t *testing.T, res *ListAPIKeysResponse, err error) {
+				assert.Nil(t, res)
+				assert.ErrorIs(t, err, cError.ErrNotAuthenticated)
+			},
+		},
+		{
+			name: "error-get-user",
+			args: args{
+				ctx: uInfoCtx,
+				req: ListAPIKeysRequest{},
+			},
+			mock: func(args args, d deps) {
+				d.store.EXPECT().GetUser(args.ctx, store.GetUserRequest{
+					Email: uInfo.Email,
+				}).Return(nil, testErr).Once()
+			},
+			assertion: func(t *testing.T, res *ListAPIKeysResponse, err error) {
+				assert.Nil(t, res)
+				assert.ErrorIs(t, err, testErr)
+			},
+		},
+		{
+			name: "error-list-api-keys",
+			args: args{
+				ctx: uInfoCtx,
+				req: ListAPIKeysRequest{},
+			},
+			mock: func(args args, d deps) {
+				d.store.EXPECT().GetUser(args.ctx, store.GetUserRequest{
+					Email: uInfo.Email,
+				}).Return(&store.GetUserResponse{User: &model.User{
+					UserID: "user_id",
+				}}, nil).Once()
+
+				d.store.EXPECT().ListAPIKeys(args.ctx, store.ListAPIKeysRequest{UserID: "user_id"}).
+					Return(nil, testErr).Once()
+			},
+			assertion: func(t *testing.T, res *ListAPIKeysResponse, err error) {
+				assert.Nil(t, res)
+				assert.ErrorIs(t, err, testErr)
+			},
+		},
+		{
+			name: "happy-path",
+			args: args{
+				ctx: uInfoCtx,
+				req: ListAPIKeysRequest{},
+			},
+			mock: func(args args, d deps) {
+				d.store.EXPECT().GetUser(args.ctx, store.GetUserRequest{
+					Email: uInfo.Email,
+				}).Return(&store.GetUserResponse{User: &model.User{
+					UserID: "user_id",
+				}}, nil).Once()
+
+				d.store.EXPECT().ListAPIKeys(args.ctx, store.ListAPIKeysRequest{UserID: "user_id"}).
+					Return(&store.ListAPIKeysResponse{
+						UserKeys: []*model.APIKey{
+							{APIKeyID: "api_key_1"},
+							{APIKeyID: "api_key_2"},
+						},
+					}, nil).Once()
+			},
+			assertion: func(t *testing.T, res *ListAPIKeysResponse, err error) {
+				assert.Nil(t, err)
+				assert.Equal(t, &ListAPIKeysResponse{
+					APIKeys: []*model.APIKey{
+						{APIKeyID: "api_key_1"},
+						{APIKeyID: "api_key_2"},
+					},
+				}, res)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		tc := tt // avoid loop closure issue
+		t.Run(tc.name, func(t *testing.T) {
+			d := deps{
+				store: mockstore.NewStore(t),
+			}
+
+			l := Impl{
+				Store: d.store,
+			}
+
+			tc.mock(tc.args, d)
+
+			res, err := l.ListAPIKeys(tc.args.ctx, tt.args.req)
+
+			tc.assertion(t, res, err)
+		})
+	}
+}
+
 func TestImpl_CreateAPIKey(t *testing.T) {
 	testErr := errors.New("error")
 

@@ -2,7 +2,6 @@ package util
 
 import (
 	"database/sql"
-	"time"
 )
 
 func SQLTimeToUnix(t sql.NullTime) int64 {
@@ -10,5 +9,5 @@ func SQLTimeToUnix(t sql.NullTime) int64 {
 		return t.Time.Unix()
 	}
 
-	return time.Time{}.Unix()
+	return 0
 }
